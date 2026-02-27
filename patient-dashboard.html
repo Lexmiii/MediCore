@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Portal — MediCore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-brand"><span class="nav-icon">⚕</span><span class="brand-name">MediCore</span></div>
+  <div class="nav-links">
+    <a class="nav-link active" href="patient-dashboard.html">My Portal</a>
+  </div>
+  <div class="nav-user">
+    <span class="role-badge role-patient">Patient</span>
+    <span class="user-name" id="navName">Arjun Kumar</span>
+    <a href="login.html" class="btn-logout">Logout</a>
+  </div>
+</nav>
+
+<div class="main-content">
+  <!-- Header -->
+  <div class="page-header fade-in">
+    <div>
+      <h1 class="page-title" id="pageTitle">Welcome, Arjun</h1>
+      <p class="page-sub" id="pageSub">arjun@mail.com · Blood Group: O+</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" onclick="openModal('bookModal')">+ Book Appointment</button>
+      <button class="btn-secondary" onclick="openModal('profileModal')">✎ Edit Profile</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="appointments">My Appointments</button>
+    <button class="tab" data-tab="profile">My Profile</button>
+    <button class="tab" data-tab="doctors">Find Doctors</button>
+  </div>
+
+  <!-- Appointments Tab -->
+  <div id="tab-appointments" class="tab-content fade-in">
+    <div class="filter-bar">
+      <input type="text" class="search-input" id="apptSearch" placeholder="Search by doctor or specialty..." oninput="renderAppts()">
+      <select class="filter-select" id="apptStatus" onchange="renderAppts()">
+        <option value="">All Status</option>
+        <option>Pending</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option>
+      </select>
+    </div>
+    <div class="section-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>#</th><th>Doctor</th><th>Specialty</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="apptBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Tab -->
+  <div id="tab-profile" class="tab-content" style="display:none">
+    <div class="section-card" style="max-width:640px">
+      <div class="section-header">
+        <h2 class="section-title">Personal Information</h2>
+        <button class="btn-secondary" style="font-size:0.83rem;padding:6px 14px;" onclick="openModal('profileModal')">Edit</button>
+      </div>
+      <div class="profile-grid" id="profileGrid"></div>
+    </div>
+  </div>
+
+  <!-- Doctors Tab -->
+  <div id="tab-doctors" class="tab-content" style="display:none">
+    <div class="filter-bar">
+      <input type="text" class="search-input" id="docSearch" placeholder="Search doctors..." oninput="renderDoctors()">
+      <select class="filter-select" id="specFilter" onchange="renderDoctors()">
+        <option value="">All Specialties</option>
+        <option>Cardiology</option><option>Neurology</option><option>Orthopedics</option>
+        <option>Pediatrics</option><option>Dermatology</option><option>General Medicine</option>
+      </select>
+    </div>
+    <div class="doctor-grid" id="doctorGrid"></div>
+  </div>
+</div>
+
+<!-- Book Appointment Modal -->
+<div id="bookModal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Book an Appointment</h3>
+      <button class="modal-close" onclick="closeModal('bookModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Select Doctor</label>
+        <select id="bookDoc" onchange="loadSlots()">
+          <option value="">— Choose a doctor —</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="bookDate" class="future-only" onchange="loadSlots()">
+        </div>
+        <div class="form-group">
+          <label>Reason / Symptoms</label>
+          <input type="text" id="bookReason" placeholder="e.g. Chest pain, Headache">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Available Time Slots</label>
+        <div id="slotsContainer" class="slots-grid">
+          <p class="muted" style="font-size:0.87rem;">Select a doctor and date first.</p>
+        </div>
+        <input type="hidden" id="selectedTime">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('bookModal')">Cancel</button>
+      <button class="btn-primary" onclick="bookAppointment()">Confirm Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="profileModal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Profile</h3>
+      <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Full Name</label><input id="profName"></div>
+        <div class="form-group"><label>Phone</label><input id="profPhone"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Date of Birth</label><input type="date" id="profDob"></div>
+        <div class="form-group"><label>Blood Group</label>
+          <select id="profBlood">
+            <option value="">Select</option>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Address</label><input id="profAddress" placeholder="City, State"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('profileModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveProfile()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="main.js"></script>
+<script src="data.js"></script>
+<script>
+  // Demo: logged in as patient id=1
+  const PAT_ID = 1;
+  let patient = getPatients().find(p => p.id === PAT_ID) || getPatients()[0];
+
+  function refreshPatient() {
+    patient = getPatients().find(p => p.id === patient.id) || patient;
+  }
+
+  function updateHeader() {
+    document.getElementById('navName').textContent = patient.name;
+    document.getElementById('pageTitle').textContent = 'Welcome, ' + patient.name.split(' ')[0];
+    document.getElementById('pageSub').textContent = `${patient.email} · Blood Group: ${patient.blood_group || 'Not set'}`;
+  }
+
+  function renderProfile() {
+    document.getElementById('profileGrid').innerHTML = `
+      <div class="profile-field"><span class="field-label">Full Name</span><span class="field-val">${patient.name}</span></div>
+      <div class="profile-field"><span class="field-label">Email</span><span class="field-val">${patient.email}</span></div>
+      <div class="profile-field"><span class="field-label">Phone</span><span class="field-val">${patient.phone}</span></div>
+      <div class="profile-field"><span class="field-label">Date of Birth</span><span class="field-val">${patient.dob || '—'}</span></div>
+      <div class="profile-field"><span class="field-label">Blood Group</span><span class="field-val">${patient.blood_group || '—'}</span></div>
+      <div class="profile-field"><span class="field-label">Address</span><span class="field-val">${patient.address || '—'}</span></div>
+    `;
+    // Prefill modal
+    document.getElementById('profName').value = patient.name;
+    document.getElementById('profPhone').value = patient.phone;
+    document.getElementById('profDob').value = patient.dob || '';
+    document.getElementById('profBlood').value = patient.blood_group || '';
+    document.getElementById('profAddress').value = patient.address || '';
+  }
+
+  function renderAppts() {
+    const q = document.getElementById('apptSearch').value.toLowerCase();
+    const status = document.getElementById('apptStatus').value;
+    const docs = getDoctors();
+    const appts = getAppointments()
+      .filter(a => a.patientId === patient.id)
+      .filter(a => {
+        const d = docs.find(d => d.id === a.doctorId) || {};
+        return (!q || (d.name||'').toLowerCase().includes(q) || (d.specialty||'').toLowerCase().includes(q)) &&
+               (!status || a.status === status);
+      })
+      .sort((a,b) => b.id - a.id);
+
+    const tbody = document.getElementById('apptBody');
+    if (appts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">No appointments yet. Book your first one!</td></tr>';
+      return;
+    }
+    tbody.innerHTML = appts.map(a => {
+      const d = docs.find(d => d.id === a.doctorId) || {};
+      return `<tr>
+        <td class="muted">${a.id}</td>
+        <td><strong>${d.name || '—'}</strong></td>
+        <td class="muted">${d.specialty || '—'}</td>
+        <td>${a.date}</td>
+        <td>${a.time}</td>
+        <td class="muted">${a.reason || '—'}</td>
+        <td><span class="badge badge-${a.status.toLowerCase()}">${a.status}</span></td>
+        <td>
+          ${a.status !== 'Cancelled' && a.status !== 'Completed'
+            ? `<button class="btn-sm btn-delete" onclick="cancelAppt(${a.id})">Cancel</button>`
+            : '<span class="muted">—</span>'}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function cancelAppt(id) {
+    confirmAction('Cancel this appointment?', () => {
+      saveAppointments(getAppointments().map(a => a.id === id ? {...a, status:'Cancelled'} : a));
+      showToast('Appointment cancelled.', 'info');
+      renderAppts();
+    });
+  }
+
+  function renderDoctors() {
+    const q = document.getElementById('docSearch').value.toLowerCase();
+    const spec = document.getElementById('specFilter').value;
+    const docs = getDoctors().filter(d =>
+      (!q || d.name.toLowerCase().includes(q) || d.specialty.toLowerCase().includes(q)) &&
+      (!spec || d.specialty === spec)
+    );
+    const grid = document.getElementById('doctorGrid');
+    if (docs.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">No doctors found.</div>';
+      return;
+    }
+    grid.innerHTML = docs.map(d => `
+      <div class="doctor-card">
+        <div class="doc-avatar">👨‍⚕️</div>
+        <div class="doc-name">${d.name}</div>
+        <div class="doc-spec">${d.specialty}</div>
+        <div class="doc-info">📞 ${d.phone}<br>📧 ${d.email}</div>
+        <div style="margin-top:12px;">
+          <span class="badge ${d.available ? 'badge-available' : 'badge-cancelled'}">${d.available ? 'Available' : 'Unavailable'}</span>
+        </div>
+        ${d.available ? `<button class="btn-primary" style="width:100%;margin-top:12px;font-size:0.83rem;padding:8px;" onclick="quickBook(${d.id})">Book Appointment</button>` : ''}
+      </div>
+    `).join('');
+  }
+
+  function quickBook(docId) {
+    document.getElementById('bookDoc').value = docId;
+    loadSlots();
+    openModal('bookModal');
+  }
+
+  // Populate doctor dropdown in book modal
+  function populateDocDropdown() {
+    const sel = document.getElementById('bookDoc');
+    sel.innerHTML = '<option value="">— Choose a doctor —</option>';
+    getDoctors().filter(d => d.available).forEach(d => {
+      sel.innerHTML += `<option value="${d.id}">${d.name} · ${d.specialty}</option>`;
+    });
+  }
+
+  function loadSlots() {
+    const docId = Number(document.getElementById('bookDoc').value);
+    const date = document.getElementById('bookDate').value;
+    const container = document.getElementById('slotsContainer');
+    document.getElementById('selectedTime').value = '';
+    if (!docId || !date) {
+      container.innerHTML = '<p class="muted" style="font-size:0.87rem;">Select a doctor and date first.</p>';
+      return;
+    }
+    const ALL_SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','14:00','14:30','15:00','15:30','16:00','16:30','17:00'];
+    const booked = getAppointments()
+      .filter(a => a.doctorId === docId && a.date === date && a.status !== 'Cancelled')
+      .map(a => a.time);
+    container.innerHTML = ALL_SLOTS.map(t =>
+      `<button type="button" class="slot-btn ${booked.includes(t) ? 'booked' : ''}"
+        ${booked.includes(t) ? 'disabled' : `onclick="selectSlot(this,'${t}')"`}>${t}</button>`
+    ).join('');
+  }
+
+  function bookAppointment() {
+    const docId = Number(document.getElementById('bookDoc').value);
+    const date = document.getElementById('bookDate').value;
+    const time = document.getElementById('selectedTime').value;
+    const reason = document.getElementById('bookReason').value.trim();
+    if (!docId) { showToast('Please select a doctor.', 'error'); return; }
+    if (!date)  { showToast('Please select a date.', 'error'); return; }
+    if (!time)  { showToast('Please select a time slot.', 'error'); return; }
+
+    const appts = getAppointments();
+    const duplicate = appts.find(a => a.doctorId === docId && a.date === date && a.time === time && a.status !== 'Cancelled');
+    if (duplicate) { showToast('That slot is already booked!', 'error'); return; }
+
+    appts.push({ id: Date.now(), patientId: patient.id, doctorId: docId, date, time, reason, status: 'Pending' });
+    saveAppointments(appts);
+    closeModal('bookModal');
+    showToast('Appointment booked successfully! 🎉');
+    renderAppts();
+  }
+
+  function saveProfile() {
+    const pats = getPatients().map(p => p.id === patient.id ? {
+      ...p,
+      name: document.getElementById('profName').value,
+      phone: document.getElementById('profPhone').value,
+      dob: document.getElementById('profDob').value,
+      blood_group: document.getElementById('profBlood').value,
+      address: document.getElementById('profAddress').value,
+    } : p);
+    savePatients(pats);
+    refreshPatient();
+    updateHeader();
+    renderProfile();
+    closeModal('profileModal');
+    showToast('Profile updated.');
+  }
+
+  // Init
+  updateHeader();
+  renderProfile();
+  renderAppts();
+  renderDoctors();
+  populateDocDropdown();
+  // Set min date
+  document.getElementById('bookDate').min = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>

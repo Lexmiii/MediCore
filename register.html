@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — MediCore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-body">
+
+<div class="auth-container">
+  <!-- Left Panel -->
+  <div class="auth-left">
+    <div class="auth-brand">
+      <div class="brand-symbol">⚕</div>
+      <h1 class="brand-title">MediCore</h1>
+      <p class="brand-tagline">Join Our Healthcare Platform</p>
+    </div>
+    <p style="color:rgba(255,255,255,0.65);margin-top:32px;font-size:0.94rem;line-height:1.8;max-width:360px;">
+      Create your account to access MediCore. Patients can book appointments, doctors can manage schedules, and admins can oversee the entire system.
+    </p>
+    <div class="auth-features" style="margin-top:36px;">
+      <div class="feature-item"><span>🧑‍🤝‍🧑</span> Patient — Book appointments</div>
+      <div class="feature-item"><span>👨‍⚕️</span> Doctor — Manage your schedule</div>
+      <div class="feature-item"><span>🛡️</span> Admin — Full system control</div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="auth-right">
+    <div class="auth-card fade-in" style="max-width:540px; width:100%;">
+      <h2 class="auth-heading">Create Account</h2>
+      <p class="auth-sub">Choose your role to get started</p>
+
+      <div id="regAlert" style="display:none; margin-bottom:14px;"></div>
+
+      <!-- Role Tabs -->
+      <div class="role-tabs" style="margin-bottom:22px;">
+        <button class="role-tab active" onclick="switchRole(this,'patient')">Patient</button>
+        <button class="role-tab"        onclick="switchRole(this,'doctor')">Doctor</button>
+        <button class="role-tab"        onclick="switchRole(this,'admin')">Admin</button>
+      </div>
+
+      <!-- ── PATIENT FORM ── -->
+      <div id="form-patient" class="auth-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="p-name" placeholder="John Doe">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="p-email" placeholder="john@email.com">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" id="p-phone" placeholder="9876543210">
+          </div>
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <input type="date" id="p-dob">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Blood Group</label>
+            <select id="p-blood">
+              <option value="">Select</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>O+</option><option>O-</option>
+              <option>AB+</option><option>AB-</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>City / Address</label>
+            <input type="text" id="p-address" placeholder="Kochi, Kerala">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="p-password" placeholder="Min 6 characters">
+          </div>
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" id="p-confirm" placeholder="Re-enter password">
+          </div>
+        </div>
+        <button type="button" class="btn-primary btn-full" onclick="registerPatient()">Create Patient Account</button>
+      </div>
+
+      <!-- ── DOCTOR FORM ── -->
+      <div id="form-doctor" class="auth-form" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="d-name" placeholder="Dr. First Last">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="d-email" placeholder="doctor@clinic.com">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" id="d-phone" placeholder="9876543210">
+          </div>
+          <div class="form-group">
+            <label>Specialty</label>
+            <select id="d-specialty">
+              <option value="">Select Specialty</option>
+              <option>Cardiology</option>
+              <option>Neurology</option>
+              <option>Orthopedics</option>
+              <option>Pediatrics</option>
+              <option>Dermatology</option>
+              <option>General Medicine</option>
+              <option>Gynecology</option>
+              <option>Ophthalmology</option>
+              <option>ENT</option>
+              <option>Psychiatry</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Clinic / Hospital Name</label>
+          <input type="text" id="d-clinic" placeholder="MediCore Clinic, Kochi">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="d-password" placeholder="Min 6 characters">
+          </div>
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" id="d-confirm" placeholder="Re-enter password">
+          </div>
+        </div>
+        <button type="button" class="btn-primary btn-full" onclick="registerDoctor()">Create Doctor Account</button>
+      </div>
+
+      <!-- ── ADMIN FORM ── -->
+      <div id="form-admin" class="auth-form" style="display:none;">
+        <div class="alert alert-info" style="margin-bottom:4px;">
+          ℹ️ Admin registration requires a secret access key provided by the system owner.
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="a-name" placeholder="Admin Name">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="a-email" placeholder="admin@clinic.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Admin Secret Key</label>
+          <input type="password" id="a-key" placeholder="Enter secret key">
+          <small style="color:var(--text-muted); font-size:0.78rem; margin-top:4px; display:block;">Demo secret key: <strong>ADMIN@2024</strong></small>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="a-password" placeholder="Min 6 characters">
+          </div>
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" id="a-confirm" placeholder="Re-enter password">
+          </div>
+        </div>
+        <button type="button" class="btn-primary btn-full" onclick="registerAdmin()">Create Admin Account</button>
+      </div>
+
+      <div class="auth-footer" style="margin-top:18px;">
+        Already have an account? <a href="login.html">Sign in</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Role switcher ──────────────────────────────────────────────
+  function switchRole(btn, role) {
+    document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('form-patient').style.display = 'none';
+    document.getElementById('form-doctor').style.display  = 'none';
+    document.getElementById('form-admin').style.display   = 'none';
+    document.getElementById('form-' + role).style.display = 'flex';
+    document.getElementById('regAlert').style.display = 'none';
+  }
+
+  function showAlert(msg, type) {
+    const el = document.getElementById('regAlert');
+    el.className = 'alert alert-' + type;
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function validatePasswords(pw, confirm) {
+    if (!pw)           { showAlert('Please enter a password.', 'error'); return false; }
+    if (pw.length < 6) { showAlert('Password must be at least 6 characters.', 'error'); return false; }
+    if (pw !== confirm) { showAlert('Passwords do not match.', 'error'); return false; }
+    return true;
+  }
+
+  function redirectToLogin(role) {
+    showAlert('✓ Account created successfully! Redirecting to login...', 'success');
+    setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+  }
+
+  // ── DEFAULT SEED DATA (same as data.js) ───────────────────────
+  const DEFAULT_PATIENTS = [
+    { id: 1, name: 'Arjun Kumar',  email: 'arjun@mail.com', phone: '9000000001', dob: '1990-05-12', blood_group: 'O+', address: 'Kochi, Kerala',    password: 'pass123' },
+    { id: 2, name: 'Sneha Pillai', email: 'sneha@mail.com', phone: '9000000002', dob: '1995-08-23', blood_group: 'A+', address: 'Thrissur, Kerala',  password: 'pass123' },
+    { id: 3, name: 'Rahul Das',    email: 'rahul@mail.com', phone: '9000000003', dob: '1988-03-17', blood_group: 'B+', address: 'Kozhikode, Kerala', password: 'pass123' },
+  ];
+  const DEFAULT_DOCTORS = [
+    { id: 1, name: 'Dr. Aisha Nair',    specialty: 'Cardiology',      email: 'aisha@clinic.com',   phone: '9876543210', available: 1, password: 'doc123' },
+    { id: 2, name: 'Dr. Rajan Mehta',   specialty: 'Neurology',       email: 'rajan@clinic.com',   phone: '9876543211', available: 1, password: 'doc123' },
+    { id: 3, name: 'Dr. Priya Suresh',  specialty: 'Orthopedics',     email: 'priya@clinic.com',   phone: '9876543212', available: 1, password: 'doc123' },
+    { id: 4, name: 'Dr. Samuel Joy',    specialty: 'Pediatrics',      email: 'samuel@clinic.com',  phone: '9876543213', available: 0, password: 'doc123' },
+    { id: 5, name: 'Dr. Meera Pillai',  specialty: 'Dermatology',     email: 'meera@clinic.com',   phone: '9876543214', available: 1, password: 'doc123' },
+    { id: 6, name: 'Dr. Thomas Kurian', specialty: 'General Medicine', email: 'thomas@clinic.com', phone: '9876543215', available: 1, password: 'doc123' },
+  ];
+  const DEFAULT_ADMINS = [
+    { id: 1, name: 'Admin', email: 'admin@clinic.com', password: 'admin123' }
+  ];
+
+  // ── REGISTER PATIENT ──────────────────────────────────────────
+  function registerPatient() {
+    const name    = document.getElementById('p-name').value.trim();
+    const email   = document.getElementById('p-email').value.trim();
+    const phone   = document.getElementById('p-phone').value.trim();
+    const dob     = document.getElementById('p-dob').value;
+    const blood   = document.getElementById('p-blood').value;
+    const address = document.getElementById('p-address').value.trim();
+    const pw      = document.getElementById('p-password').value;
+    const confirm = document.getElementById('p-confirm').value;
+
+    if (!name)  return showAlert('Please enter your full name.', 'error');
+    if (!email) return showAlert('Please enter your email.', 'error');
+    if (!phone) return showAlert('Please enter your phone number.', 'error');
+    if (!validatePasswords(pw, confirm)) return;
+
+    const stored   = localStorage.getItem('mc_patients');
+    const patients = stored ? JSON.parse(stored) : DEFAULT_PATIENTS;
+    if (patients.find(p => p.email === email)) return showAlert('Email already registered.', 'error');
+
+    patients.push({ id: Date.now(), name, email, phone, dob, blood_group: blood, address, password: pw });
+    localStorage.setItem('mc_patients', JSON.stringify(patients));
+    redirectToLogin('patient');
+  }
+
+  // ── REGISTER DOCTOR ───────────────────────────────────────────
+  function registerDoctor() {
+    const name      = document.getElementById('d-name').value.trim();
+    const email     = document.getElementById('d-email').value.trim();
+    const phone     = document.getElementById('d-phone').value.trim();
+    const specialty = document.getElementById('d-specialty').value;
+    const clinic    = document.getElementById('d-clinic').value.trim();
+    const pw        = document.getElementById('d-password').value;
+    const confirm   = document.getElementById('d-confirm').value;
+
+    if (!name)      return showAlert('Please enter your full name.', 'error');
+    if (!email)     return showAlert('Please enter your email.', 'error');
+    if (!phone)     return showAlert('Please enter your phone number.', 'error');
+    if (!specialty) return showAlert('Please select your specialty.', 'error');
+    if (!validatePasswords(pw, confirm)) return;
+
+    const stored  = localStorage.getItem('mc_doctors');
+    const doctors = stored ? JSON.parse(stored) : DEFAULT_DOCTORS;
+    if (doctors.find(d => d.email === email)) return showAlert('Email already registered.', 'error');
+
+    doctors.push({ id: Date.now(), name, email, phone, specialty, clinic, available: 1, password: pw });
+    localStorage.setItem('mc_doctors', JSON.stringify(doctors));
+    redirectToLogin('doctor');
+  }
+
+  // ── REGISTER ADMIN ────────────────────────────────────────────
+  function registerAdmin() {
+    const name    = document.getElementById('a-name').value.trim();
+    const email   = document.getElementById('a-email').value.trim();
+    const key     = document.getElementById('a-key').value.trim();
+    const pw      = document.getElementById('a-password').value;
+    const confirm = document.getElementById('a-confirm').value;
+
+    if (!name)  return showAlert('Please enter your name.', 'error');
+    if (!email) return showAlert('Please enter your email.', 'error');
+    if (!key)   return showAlert('Please enter the admin secret key.', 'error');
+    if (key !== 'ADMIN@2024') return showAlert('Invalid admin secret key.', 'error');
+    if (!validatePasswords(pw, confirm)) return;
+
+    const stored = localStorage.getItem('mc_admins');
+    const admins = stored ? JSON.parse(stored) : DEFAULT_ADMINS;
+    if (admins.find(a => a.email === email)) return showAlert('Email already registered.', 'error');
+
+    admins.push({ id: Date.now(), name, email, password: pw });
+    localStorage.setItem('mc_admins', JSON.stringify(admins));
+    redirectToLogin('admin');
+  }
+</script>
+</body>
+</html>

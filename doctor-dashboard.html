@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Dashboard — MediCore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-brand"><span class="nav-icon">⚕</span><span class="brand-name">MediCore</span></div>
+  <div class="nav-links">
+    <a class="nav-link active" href="doctor-dashboard.html">My Appointments</a>
+  </div>
+  <div class="nav-user">
+    <span class="role-badge role-doctor">Doctor</span>
+    <span class="user-name" id="docName">Dr. Aisha Nair</span>
+    <a href="login.html" class="btn-logout">Logout</a>
+  </div>
+</nav>
+
+<div class="main-content">
+  <div class="page-header fade-in">
+    <div>
+      <h1 class="page-title" id="pageTitle">Dr. Aisha Nair</h1>
+      <p class="page-sub" id="pageSub">Cardiology</p>
+    </div>
+    <span class="badge badge-available badge-lg" id="availBadge">Available</span>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card stat-blue fade-in fade-in-1">
+      <div class="stat-icon">📋</div>
+      <div class="stat-info"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total Appointments</div></div>
+    </div>
+    <div class="stat-card stat-orange fade-in fade-in-2">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-info"><div class="stat-num" id="statPending">0</div><div class="stat-label">Pending</div></div>
+    </div>
+    <div class="stat-card stat-green fade-in fade-in-3">
+      <div class="stat-icon">✅</div>
+      <div class="stat-info"><div class="stat-num" id="statConfirmed">0</div><div class="stat-label">Confirmed</div></div>
+    </div>
+    <div class="stat-card stat-teal fade-in fade-in-4">
+      <div class="stat-icon">📆</div>
+      <div class="stat-info"><div class="stat-num" id="statToday">0</div><div class="stat-label">Today</div></div>
+    </div>
+  </div>
+
+  <div class="section-card fade-in">
+    <div class="section-header">
+      <h2 class="section-title">My Appointments</h2>
+      <div class="filter-bar-inline">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search patients..." oninput="renderTable()" style="min-width:180px;">
+        <select class="filter-select" id="statusFilter" onchange="renderTable()">
+          <option value="">All Status</option>
+          <option>Pending</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Patient</th><th>Phone</th><th>Blood Group</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody id="apptBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="main.js"></script>
+<script src="data.js"></script>
+<script>
+  // Demo: logged in as doctor id=1
+  const DOC_ID = 1;
+  const doc = getDoctors().find(d => d.id === DOC_ID) || getDoctors()[0];
+  document.getElementById('docName').textContent = doc.name;
+  document.getElementById('pageTitle').textContent = doc.name;
+  document.getElementById('pageSub').textContent = `${doc.specialty} · ${doc.phone}`;
+  if (!doc.available) {
+    const badge = document.getElementById('availBadge');
+    badge.textContent = 'Unavailable';
+    badge.className = 'badge badge-cancelled badge-lg';
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  function getMyAppts() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const pats = getPatients();
+    return getAppointments()
+      .filter(a => a.doctorId === doc.id)
+      .filter(a => {
+        const p = pats.find(p => p.id === a.patientId) || {};
+        return (!q || (p.name||'').toLowerCase().includes(q)) && (!status || a.status === status);
+      })
+      .sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+  }
+
+  function renderStats() {
+    const all = getAppointments().filter(a => a.doctorId === doc.id);
+    document.getElementById('statTotal').textContent = all.length;
+    document.getElementById('statPending').textContent = all.filter(a => a.status === 'Pending').length;
+    document.getElementById('statConfirmed').textContent = all.filter(a => a.status === 'Confirmed').length;
+    document.getElementById('statToday').textContent = all.filter(a => a.date === today).length;
+  }
+
+  function renderTable() {
+    const appts = getMyAppts();
+    const pats = getPatients();
+    const tbody = document.getElementById('apptBody');
+    if (appts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">No appointments found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = appts.map(a => {
+      const p = pats.find(p => p.id === a.patientId) || {};
+      const isToday = a.date === today;
+      return `<tr ${isToday ? 'style="background:#fffbeb"' : ''}>
+        <td><strong>${p.name || '—'}</strong> ${isToday ? '<span style="font-size:0.72rem;color:var(--amber);font-weight:700;margin-left:4px;">TODAY</span>' : ''}</td>
+        <td class="muted">${p.phone || '—'}</td>
+        <td><span class="badge badge-confirmed">${p.blood_group || '—'}</span></td>
+        <td>${a.date}</td>
+        <td>${a.time}</td>
+        <td class="muted">${a.reason || '—'}</td>
+        <td><span class="badge badge-${a.status.toLowerCase()}">${a.status}</span></td>
+        <td>
+          ${a.status !== 'Completed' && a.status !== 'Cancelled' ? `
+          <select class="inline-select" onchange="updateStatus(${a.id}, this.value)">
+            <option value="Pending" ${a.status==='Pending'?'selected':''}>Pending</option>
+            <option value="Confirmed" ${a.status==='Confirmed'?'selected':''}>Confirmed</option>
+            <option value="Completed" ${a.status==='Completed'?'selected':''}>Completed</option>
+          </select>` : '<span class="muted">—</span>'}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function updateStatus(id, status) {
+    saveAppointments(getAppointments().map(a => a.id === id ? {...a, status} : a));
+    showToast(`Marked as ${status}.`);
+    renderStats();
+    renderTable();
+  }
+
+  renderStats();
+  renderTable();
+</script>
+</body>
+</html>

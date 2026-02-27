@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — MediCore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <span class="nav-icon">⚕</span>
+    <span class="brand-name">MediCore</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link active" href="admin-dashboard.html">Dashboard</a>
+    <a class="nav-link" href="admin-doctors.html">Doctors</a>
+    <a class="nav-link" href="admin-patients.html">Patients</a>
+    <a class="nav-link" href="admin-appointments.html">Appointments</a>
+  </div>
+  <div class="nav-user">
+    <span class="role-badge role-admin">Admin</span>
+    <span class="user-name">Admin</span>
+    <a href="login.html" class="btn-logout">Logout</a>
+  </div>
+</nav>
+
+<div class="main-content">
+
+  <!-- Header -->
+  <div class="page-header fade-in">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-sub">Welcome back — here's your clinic overview</p>
+    </div>
+    <div id="currentDate" style="color:var(--text-muted);font-size:0.88rem;"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card stat-blue fade-in fade-in-1">
+      <div class="stat-icon">👨‍⚕️</div>
+      <div class="stat-info"><div class="stat-num" id="statDoctors">4</div><div class="stat-label">Total Doctors</div></div>
+    </div>
+    <div class="stat-card stat-green fade-in fade-in-2">
+      <div class="stat-icon">🧑‍🤝‍🧑</div>
+      <div class="stat-info"><div class="stat-num" id="statPatients">2</div><div class="stat-label">Registered Patients</div></div>
+    </div>
+    <div class="stat-card stat-orange fade-in fade-in-3">
+      <div class="stat-icon">📅</div>
+      <div class="stat-info"><div class="stat-num" id="statAppts">5</div><div class="stat-label">Total Appointments</div></div>
+    </div>
+    <div class="stat-card stat-red fade-in fade-in-4">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-info"><div class="stat-num" id="statPending">2</div><div class="stat-label">Pending</div></div>
+    </div>
+  </div>
+
+  <!-- Recent Appointments -->
+  <div class="section-card fade-in">
+    <div class="section-header">
+      <h2 class="section-title">Recent Appointments</h2>
+      <a href="admin-appointments.html" class="link-more">View all →</a>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table" id="recentTable">
+        <thead>
+          <tr>
+            <th>#</th><th>Patient</th><th>Doctor</th><th>Specialty</th><th>Date & Time</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="recentBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Quick Links -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" class="fade-in">
+    <a href="admin-doctors.html" style="text-decoration:none;">
+      <div class="section-card" style="padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+        <div style="font-size:2rem;margin-bottom:10px;">👨‍⚕️</div>
+        <div style="font-weight:700;color:var(--navy);">Manage Doctors</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">Add, edit, remove doctors</div>
+      </div>
+    </a>
+    <a href="admin-patients.html" style="text-decoration:none;">
+      <div class="section-card" style="padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+        <div style="font-size:2rem;margin-bottom:10px;">🧑‍🤝‍🧑</div>
+        <div style="font-weight:700;color:var(--navy);">View Patients</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">Browse patient records</div>
+      </div>
+    </a>
+    <a href="admin-appointments.html" style="text-decoration:none;">
+      <div class="section-card" style="padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+        <div style="font-size:2rem;margin-bottom:10px;">📅</div>
+        <div style="font-weight:700;color:var(--navy);">Appointments</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">Manage all bookings</div>
+      </div>
+    </a>
+  </div>
+
+</div>
+
+<script src="main.js"></script>
+<script src="data.js"></script>
+<script>
+  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  // Load stats from mock data
+  const appts = getAppointments();
+  const docs  = getDoctors();
+  const pats  = getPatients();
+  document.getElementById('statDoctors').textContent = docs.length;
+  document.getElementById('statPatients').textContent = pats.length;
+  document.getElementById('statAppts').textContent = appts.length;
+  document.getElementById('statPending').textContent = appts.filter(a => a.status === 'Pending').length;
+
+  // Recent appointments table
+  const recent = [...appts].sort((a,b) => b.id - a.id).slice(0,6);
+  const tbody = document.getElementById('recentBody');
+  if (recent.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No appointments yet.</td></tr>';
+  } else {
+    tbody.innerHTML = recent.map(a => {
+      const doc = docs.find(d => d.id === a.doctorId) || {};
+      const pat = pats.find(p => p.id === a.patientId) || {};
+      return `<tr>
+        <td class="muted">${a.id}</td>
+        <td><strong>${pat.name || '—'}</strong></td>
+        <td>${doc.name || '—'}</td>
+        <td class="muted">${doc.specialty || '—'}</td>
+        <td>${a.date} · ${a.time}</td>
+        <td><span class="badge badge-${a.status.toLowerCase()}">${a.status}</span></td>
+      </tr>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>

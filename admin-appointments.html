@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointments — MediCore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-brand"><span class="nav-icon">⚕</span><span class="brand-name">MediCore</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="admin-dashboard.html">Dashboard</a>
+    <a class="nav-link" href="admin-doctors.html">Doctors</a>
+    <a class="nav-link" href="admin-patients.html">Patients</a>
+    <a class="nav-link active" href="admin-appointments.html">Appointments</a>
+  </div>
+  <div class="nav-user">
+    <span class="role-badge role-admin">Admin</span>
+    <span class="user-name">Admin</span>
+    <a href="login.html" class="btn-logout">Logout</a>
+  </div>
+</nav>
+
+<div class="main-content">
+  <div class="page-header fade-in">
+    <div>
+      <h1 class="page-title">Appointments</h1>
+      <p class="page-sub" id="apptCount">Loading...</p>
+    </div>
+  </div>
+
+  <div class="filter-bar fade-in">
+    <input type="text" class="search-input" id="searchInput" placeholder="Search patient or doctor..." oninput="renderTable()">
+    <select class="filter-select" id="statusFilter" onchange="renderTable()">
+      <option value="">All Status</option>
+      <option>Pending</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option>
+    </select>
+    <input type="date" class="filter-select" id="dateFilter" onchange="renderTable()">
+    <button class="btn-secondary" onclick="clearFilters()">Clear</button>
+  </div>
+
+  <div class="section-card fade-in">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>#</th><th>Patient</th><th>Doctor</th><th>Specialty</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="apptTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="main.js"></script>
+<script src="data.js"></script>
+<script>
+  const STATUS_ORDER = ['Pending','Confirmed','Completed','Cancelled'];
+
+  function renderTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const date = document.getElementById('dateFilter').value;
+    const docs = getDoctors();
+    const pats = getPatients();
+
+    const appts = getAppointments().filter(a => {
+      const doc = docs.find(d => d.id === a.doctorId) || {};
+      const pat = pats.find(p => p.id === a.patientId) || {};
+      const text = `${pat.name || ''} ${doc.name || ''}`.toLowerCase();
+      return (!q || text.includes(q)) &&
+             (!status || a.status === status) &&
+             (!date || a.date === date);
+    }).sort((a,b) => b.id - a.id);
+
+    document.getElementById('apptCount').textContent = `${appts.length} appointment${appts.length !== 1 ? 's' : ''}`;
+    const tbody = document.getElementById('apptTableBody');
+    if (appts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">No appointments found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = appts.map(a => {
+      const doc = docs.find(d => d.id === a.doctorId) || {};
+      const pat = pats.find(p => p.id === a.patientId) || {};
+      return `<tr>
+        <td class="muted">${a.id}</td>
+        <td><strong>${pat.name || '—'}</strong></td>
+        <td>${doc.name || '—'}</td>
+        <td class="muted">${doc.specialty || '—'}</td>
+        <td>${a.date}</td>
+        <td>${a.time}</td>
+        <td class="muted">${a.reason || '—'}</td>
+        <td><span class="badge badge-${a.status.toLowerCase()}">${a.status}</span></td>
+        <td class="actions">
+          <select class="inline-select" onchange="updateStatus(${a.id}, this.value)">
+            ${STATUS_ORDER.map(s => `<option value="${s}" ${a.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+          <button class="btn-sm btn-delete" onclick="deleteAppt(${a.id})">✕</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function updateStatus(id, status) {
+    const appts = getAppointments().map(a => a.id === id ? {...a, status} : a);
+    saveAppointments(appts);
+    showToast(`Status updated to ${status}.`);
+    renderTable();
+  }
+
+  function deleteAppt(id) {
+    confirmAction('Delete this appointment?', () => {
+      saveAppointments(getAppointments().filter(a => a.id !== id));
+      showToast('Appointment deleted.', 'error');
+      renderTable();
+    });
+  }
+
+  function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    renderTable();
+  }
+
+  renderTable();
+</script>
+</body>
+</html>

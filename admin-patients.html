@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patients — MediCore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-brand"><span class="nav-icon">⚕</span><span class="brand-name">MediCore</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="admin-dashboard.html">Dashboard</a>
+    <a class="nav-link" href="admin-doctors.html">Doctors</a>
+    <a class="nav-link active" href="admin-patients.html">Patients</a>
+    <a class="nav-link" href="admin-appointments.html">Appointments</a>
+  </div>
+  <div class="nav-user">
+    <span class="role-badge role-admin">Admin</span>
+    <span class="user-name">Admin</span>
+    <a href="login.html" class="btn-logout">Logout</a>
+  </div>
+</nav>
+
+<div class="main-content">
+  <div class="page-header fade-in">
+    <div>
+      <h1 class="page-title">Patients</h1>
+      <p class="page-sub" id="patCount">Loading...</p>
+    </div>
+  </div>
+
+  <div class="filter-bar fade-in">
+    <input type="text" class="search-input" id="searchInput" placeholder="Search by name, email, blood group..." oninput="renderTable()">
+    <select class="filter-select" id="bloodFilter" onchange="renderTable()">
+      <option value="">All Blood Groups</option>
+      <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+      <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+    </select>
+  </div>
+
+  <div class="section-card fade-in">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Date of Birth</th><th>Blood Group</th><th>Address</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="patTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- View Patient Modal -->
+<div id="viewModal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h3>Patient Details</h3>
+      <button class="modal-close" onclick="closeModal('viewModal')">✕</button>
+    </div>
+    <div id="viewBody" class="profile-grid"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('viewModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="main.js"></script>
+<script src="data.js"></script>
+<script>
+  function renderTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const blood = document.getElementById('bloodFilter').value;
+    const pats = getPatients().filter(p =>
+      (!q || p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || (p.blood_group||'').includes(q)) &&
+      (!blood || p.blood_group === blood)
+    );
+    document.getElementById('patCount').textContent = `${pats.length} registered patient${pats.length !== 1 ? 's' : ''}`;
+    const tbody = document.getElementById('patTableBody');
+    if (pats.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">No patients found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = pats.map(p => `
+      <tr>
+        <td class="muted">${p.id}</td>
+        <td><strong>${p.name}</strong></td>
+        <td class="muted">${p.email}</td>
+        <td class="muted">${p.phone}</td>
+        <td class="muted">${p.dob || '—'}</td>
+        <td><span class="badge badge-confirmed">${p.blood_group || '—'}</span></td>
+        <td class="muted">${p.address || '—'}</td>
+        <td class="actions">
+          <button class="btn-sm btn-edit" onclick="viewPatient(${p.id})">View</button>
+          <button class="btn-sm btn-delete" onclick="deletePat(${p.id})">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function viewPatient(id) {
+    const p = getPatients().find(p => p.id === id);
+    if (!p) return;
+    document.getElementById('viewBody').innerHTML = `
+      <div class="profile-field"><span class="field-label">Full Name</span><span class="field-val">${p.name}</span></div>
+      <div class="profile-field"><span class="field-label">Email</span><span class="field-val">${p.email}</span></div>
+      <div class="profile-field"><span class="field-label">Phone</span><span class="field-val">${p.phone}</span></div>
+      <div class="profile-field"><span class="field-label">Date of Birth</span><span class="field-val">${p.dob || '—'}</span></div>
+      <div class="profile-field"><span class="field-label">Blood Group</span><span class="field-val">${p.blood_group || '—'}</span></div>
+      <div class="profile-field"><span class="field-label">Address</span><span class="field-val">${p.address || '—'}</span></div>
+    `;
+    openModal('viewModal');
+  }
+
+  function deletePat(id) {
+    confirmAction('Delete this patient and all their appointments?', () => {
+      savePatients(getPatients().filter(p => p.id !== id));
+      saveAppointments(getAppointments().filter(a => a.patientId !== id));
+      showToast('Patient removed.', 'error');
+      renderTable();
+    });
+  }
+
+  renderTable();
+</script>
+</body>
+</html>
