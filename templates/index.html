@@ -1,11 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=login.html">
-  <title>MediCore</title>
+<title>Medicore Patients</title>
 </head>
+
 <body>
-  <p>Redirecting to <a href="login.html">login</a>...</p>
+
+<h2>Medicore Patient List</h2>
+
+<button onclick="loadPatients()">Load Patients</button>
+
+<ul id="patients"></ul>
+
+<h3>Add Patient</h3>
+
+<input type="text" id="name" placeholder="Name">
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+
+<button onclick="addPatient()">Add Patient</button>
+
+<!-- Load main frontend script -->
+<script src="/static/main.js"></script>
+
 </body>
+
 </html>
