@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register — MediCore</title>
-  <link rel="stylesheet" href="style.css">
+  <<link rel="stylesheet" href="/templates/style.css">
+  <script src="/static/css/data.js"></script>
 </head>
 <body class="auth-body">
 
@@ -203,37 +204,14 @@
   }
 
   function validatePasswords(pw, confirm) {
-    if (!pw)           { showAlert('Please enter a password.', 'error'); return false; }
-    if (pw.length < 6) { showAlert('Password must be at least 6 characters.', 'error'); return false; }
+    if (!pw)            { showAlert('Please enter a password.', 'error'); return false; }
+    if (pw.length < 6)  { showAlert('Password must be at least 6 characters.', 'error'); return false; }
     if (pw !== confirm) { showAlert('Passwords do not match.', 'error'); return false; }
     return true;
   }
 
-  function redirectToLogin(role) {
-    showAlert('✓ Account created successfully! Redirecting to login...', 'success');
-    setTimeout(function() { window.location.href = 'login.html'; }, 1500);
-  }
-
-  // ── DEFAULT SEED DATA (same as data.js) ───────────────────────
-  const DEFAULT_PATIENTS = [
-    { id: 1, name: 'Arjun Kumar',  email: 'arjun@mail.com', phone: '9000000001', dob: '1990-05-12', blood_group: 'O+', address: 'Kochi, Kerala',    password: 'pass123' },
-    { id: 2, name: 'Sneha Pillai', email: 'sneha@mail.com', phone: '9000000002', dob: '1995-08-23', blood_group: 'A+', address: 'Thrissur, Kerala',  password: 'pass123' },
-    { id: 3, name: 'Rahul Das',    email: 'rahul@mail.com', phone: '9000000003', dob: '1988-03-17', blood_group: 'B+', address: 'Kozhikode, Kerala', password: 'pass123' },
-  ];
-  const DEFAULT_DOCTORS = [
-    { id: 1, name: 'Dr. Aisha Nair',    specialty: 'Cardiology',      email: 'aisha@clinic.com',   phone: '9876543210', available: 1, password: 'doc123' },
-    { id: 2, name: 'Dr. Rajan Mehta',   specialty: 'Neurology',       email: 'rajan@clinic.com',   phone: '9876543211', available: 1, password: 'doc123' },
-    { id: 3, name: 'Dr. Priya Suresh',  specialty: 'Orthopedics',     email: 'priya@clinic.com',   phone: '9876543212', available: 1, password: 'doc123' },
-    { id: 4, name: 'Dr. Samuel Joy',    specialty: 'Pediatrics',      email: 'samuel@clinic.com',  phone: '9876543213', available: 0, password: 'doc123' },
-    { id: 5, name: 'Dr. Meera Pillai',  specialty: 'Dermatology',     email: 'meera@clinic.com',   phone: '9876543214', available: 1, password: 'doc123' },
-    { id: 6, name: 'Dr. Thomas Kurian', specialty: 'General Medicine', email: 'thomas@clinic.com', phone: '9876543215', available: 1, password: 'doc123' },
-  ];
-  const DEFAULT_ADMINS = [
-    { id: 1, name: 'Admin', email: 'admin@clinic.com', password: 'admin123' }
-  ];
-
   // ── REGISTER PATIENT ──────────────────────────────────────────
-  function registerPatient() {
+  async function registerPatient() {
     const name    = document.getElementById('p-name').value.trim();
     const email   = document.getElementById('p-email').value.trim();
     const phone   = document.getElementById('p-phone').value.trim();
@@ -248,22 +226,31 @@
     if (!phone) return showAlert('Please enter your phone number.', 'error');
     if (!validatePasswords(pw, confirm)) return;
 
-    const stored   = localStorage.getItem('mc_patients');
-    const patients = stored ? JSON.parse(stored) : DEFAULT_PATIENTS;
-    if (patients.find(p => p.email === email)) return showAlert('Email already registered.', 'error');
+    try {
+      const res  = await fetch('http://localhost:5000/api/auth/register', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name, email, password: pw, phone, dob, blood_group: blood, address }),
+      });
+      const data = await res.json();
 
-    patients.push({ id: Date.now(), name, email, phone, dob, blood_group: blood, address, password: pw });
-    localStorage.setItem('mc_patients', JSON.stringify(patients));
-    redirectToLogin('patient');
+      if (!res.ok) return showAlert(data.message || 'Registration failed.', 'error');
+
+      showAlert('✓ Account created successfully! Redirecting to login...', 'success');
+      setTimeout(() => window.location.href = 'login', 1500);
+
+    } catch (err) {
+  console.log(err)
+      showAlert('Cannot reach server. Is the backend running? (npm run dev)', 'error');
+    }
   }
 
   // ── REGISTER DOCTOR ───────────────────────────────────────────
-  function registerDoctor() {
+  async function registerDoctor() {
     const name      = document.getElementById('d-name').value.trim();
     const email     = document.getElementById('d-email').value.trim();
     const phone     = document.getElementById('d-phone').value.trim();
     const specialty = document.getElementById('d-specialty').value;
-    const clinic    = document.getElementById('d-clinic').value.trim();
     const pw        = document.getElementById('d-password').value;
     const confirm   = document.getElementById('d-confirm').value;
 
@@ -273,17 +260,26 @@
     if (!specialty) return showAlert('Please select your specialty.', 'error');
     if (!validatePasswords(pw, confirm)) return;
 
-    const stored  = localStorage.getItem('mc_doctors');
-    const doctors = stored ? JSON.parse(stored) : DEFAULT_DOCTORS;
-    if (doctors.find(d => d.email === email)) return showAlert('Email already registered.', 'error');
+    try {
+      const res  = await fetch('http://localhost:5000/api/auth/register-doctor', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name, email, password: pw, phone, specialty }),
+      });
+      const data = await res.json();
 
-    doctors.push({ id: Date.now(), name, email, phone, specialty, clinic, available: 1, password: pw });
-    localStorage.setItem('mc_doctors', JSON.stringify(doctors));
-    redirectToLogin('doctor');
+      if (!res.ok) return showAlert(data.message || 'Registration failed.', 'error');
+
+      showAlert('✓ Account created successfully! Redirecting to login...', 'success');
+      setTimeout(() => window.location.href = 'login', 1500);
+
+    } catch (err) {
+      showAlert('Cannot reach server. Is the backend running? (npm run dev)', 'error');
+    }
   }
 
   // ── REGISTER ADMIN ────────────────────────────────────────────
-  function registerAdmin() {
+  async function registerAdmin() {
     const name    = document.getElementById('a-name').value.trim();
     const email   = document.getElementById('a-email').value.trim();
     const key     = document.getElementById('a-key').value.trim();
@@ -293,16 +289,25 @@
     if (!name)  return showAlert('Please enter your name.', 'error');
     if (!email) return showAlert('Please enter your email.', 'error');
     if (!key)   return showAlert('Please enter the admin secret key.', 'error');
-    if (key !== 'ADMIN@2024') return showAlert('Invalid admin secret key.', 'error');
     if (!validatePasswords(pw, confirm)) return;
 
-    const stored = localStorage.getItem('mc_admins');
-    const admins = stored ? JSON.parse(stored) : DEFAULT_ADMINS;
-    if (admins.find(a => a.email === email)) return showAlert('Email already registered.', 'error');
+    try {
+      const res  = await fetch('http://localhost:5000/api/auth/register-admin', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name, email, password: pw, secretKey: key }),
+      });
+      const data = await res.json();
 
-    admins.push({ id: Date.now(), name, email, password: pw });
-    localStorage.setItem('mc_admins', JSON.stringify(admins));
-    redirectToLogin('admin');
+      if (!res.ok) return showAlert(data.message || 'Registration failed.', 'error');
+
+      showAlert('✓ Account created successfully! Redirecting to login...', 'success');
+      setTimeout(() => window.location.href = 'login', 1500);
+
+    } catch (err) {
+      console.log(err)
+      showAlert('Cannot reach server. Is the backend running? (npm run dev)', 'error');
+    }
   }
 </script>
 </body>

@@ -1,128 +1,47 @@
 require("dotenv").config();
 
+console.log("ENV USER:", process.env.DB_USER);
+
 const express = require("express");
-const mysql = require("mysql2");
-const cors = require("cors");
+const cors    = require("cors");
+const path    = require("path");
 
 const app = express();
 
-// Middleware
+// ─── MIDDLEWARE ───────────────────────────────────
 app.use(cors());
 app.use(express.json());
 
+// ─── STATIC FILES ─────────────────────────────────
+app.use("/static", express.static(path.join(__dirname, "../static")));
+app.use("/templates", express.static(path.join(__dirname, "../templates")));  // add this
 
-// ─── DATABASE CONNECTION ───────────────────────────
+// ─── API ROUTES ───────────────────────────────────
+const authRoutes        = require("./routes/auth");
+const doctorRoutes      = require("./routes/doctors");
+const patientRoutes     = require("./routes/patients");
+const appointmentRoutes = require("./routes/appointments");
 
-const db = mysql.createConnection({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "root123",
-  database: process.env.DB_NAME || "medicore"
-});
+app.use("/api/auth",         authRoutes);
+app.use("/api/doctors",      doctorRoutes);
+app.use("/api/patients",     patientRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
-db.connect((err) => {
-  if (err) {
-    console.log("Database connection failed:", err);
-  } else {
-    console.log("✅ MySQL Connected");
-  }
-});
+// ─── HTML PAGES ───────────────────────────────────
+const T = path.join(__dirname, "../templates");
 
+app.get("/",         (req, res) => res.redirect("/login"));
+app.get("/login",    (req, res) => res.sendFile(path.join(T, "login.html")));
+app.get("/register", (req, res) => res.sendFile(path.join(T, "register.html")));
+app.get("/admin",    (req, res) => res.sendFile(path.join(T, "admin-dashboard.html")));
+app.get("/doctor",   (req, res) => res.sendFile(path.join(T, "doctor-dashboard.html")));
+app.get("/patient",  (req, res) => res.sendFile(path.join(T, "patient-dashboard.html")));
 
-// ─── TEST ROUTE ────────────────────────────────────
-
-app.get("/", (req, res) => {
-  res.send("Medicore Backend Running 🚀");
-});
-
-
-// ─── PATIENT ROUTES ───────────────────────────────
-
-app.get("/patients", (req, res) => {
-
-  const sql = "SELECT * FROM patients";
-
-  db.query(sql, (err, result) => {
-
-    if (err) {
-      console.log(err);
-      res.status(500).send("Database error");
-    } else {
-      res.json(result);
-    }
-
-  });
-
-});
-
-
-app.post("/patients", (req, res) => {
-
-  const { name, email, password } = req.body;
-
-  const sql = `
-    INSERT INTO patients (name,email,password)
-    VALUES (?,?,?)
-  `;
-
-  db.query(sql, [name, email, password], (err, result) => {
-
-    if (err) {
-      console.log(err);
-      res.status(500).send("Insert failed");
-    } else {
-      res.send("✅ Patient added successfully");
-    }
-
-  });
-
-});
-
-
-// ─── DOCTOR ROUTES ─────────────────────────────────
-
-app.get("/doctors", (req, res) => {
-
-  const sql = "SELECT * FROM doctors";
-
-  db.query(sql, (err, result) => {
-
-    if (err) {
-      console.log(err);
-      res.status(500).send("Database error");
-    } else {
-      res.json(result);
-    }
-
-  });
-
-});
-
-
-// ─── APPOINTMENT ROUTES ───────────────────────────
-
-app.get("/appointments", (req, res) => {
-
-  const sql = "SELECT * FROM appointments";
-
-  db.query(sql, (err, result) => {
-
-    if (err) {
-      console.log(err);
-      res.status(500).send("Database error");
-    } else {
-      res.json(result);
-    }
-
-  });
-
-});
-
+// ─── TEST ROUTE ───────────────────────────────────
+app.get("/test", (req, res) => res.send("Medicore Backend Running 🚀"));
 
 // ─── SERVER START ─────────────────────────────────
-
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

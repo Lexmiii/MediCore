@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login — MediCore</title>
-  <link rel="stylesheet" href="style.css">
+ <link rel="stylesheet" href="/templates/style.css">
+  <script src="/static/css/data.js"></script>
 </head>
 <body class="auth-body">
 
@@ -86,74 +87,41 @@
     el.style.display = 'block';
   }
 
-  // ── Default seed data ─────────────────────────────────────────
-  const DEFAULT_PATIENTS = [
-    { id: 1, name: 'Arjun Kumar',  email: 'arjun@mail.com', phone: '9000000001', dob: '1990-05-12', blood_group: 'O+', address: 'Kochi, Kerala',    password: 'pass123' },
-    { id: 2, name: 'Sneha Pillai', email: 'sneha@mail.com', phone: '9000000002', dob: '1995-08-23', blood_group: 'A+', address: 'Thrissur, Kerala',  password: 'pass123' },
-    { id: 3, name: 'Rahul Das',    email: 'rahul@mail.com', phone: '9000000003', dob: '1988-03-17', blood_group: 'B+', address: 'Kozhikode, Kerala', password: 'pass123' },
-  ];
-  const DEFAULT_DOCTORS = [
-    { id: 1, name: 'Dr. Aisha Nair',    specialty: 'Cardiology',       email: 'aisha@clinic.com',   phone: '9876543210', available: 1, password: 'doc123' },
-    { id: 2, name: 'Dr. Rajan Mehta',   specialty: 'Neurology',        email: 'rajan@clinic.com',   phone: '9876543211', available: 1, password: 'doc123' },
-    { id: 3, name: 'Dr. Priya Suresh',  specialty: 'Orthopedics',      email: 'priya@clinic.com',   phone: '9876543212', available: 1, password: 'doc123' },
-    { id: 4, name: 'Dr. Samuel Joy',    specialty: 'Pediatrics',       email: 'samuel@clinic.com',  phone: '9876543213', available: 0, password: 'doc123' },
-    { id: 5, name: 'Dr. Meera Pillai',  specialty: 'Dermatology',      email: 'meera@clinic.com',   phone: '9876543214', available: 1, password: 'doc123' },
-    { id: 6, name: 'Dr. Thomas Kurian', specialty: 'General Medicine', email: 'thomas@clinic.com',  phone: '9876543215', available: 1, password: 'doc123' },
-  ];
-  const DEFAULT_ADMINS = [
-    { id: 1, name: 'Admin', email: 'admin@clinic.com', password: 'admin123' }
-  ];
-
-  function handleLogin() {
+  async function handleLogin() {
     const email    = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
 
-    if (!email || !password) return showError('Please enter your email and password.');
+    if (!email || !password)
+      return showError('Please enter your email and password.');
 
-    // ── ADMIN ────────────────────────────────────────────────────
-    if (selectedRole === 'admin') {
-      const stored = localStorage.getItem('mc_admins');
-      const admins = stored ? JSON.parse(stored) : DEFAULT_ADMINS;
-      const user   = admins.find(a => a.email === email && a.password === password);
-      if (user) {
-        sessionStorage.setItem('mc_user', JSON.stringify({ name: user.name, role: 'admin', id: user.id }));
-        window.location.href = 'admin-dashboard.html';
-      } else {
-        showError('Invalid admin credentials. Register as admin first or use demo: admin@clinic.com / admin123');
-      }
-      return;
-    }
+    const endpoint = selectedRole === 'admin'  ? 'http://localhost:5000/api/auth/login-admin'
+                   : selectedRole === 'doctor' ? 'http://localhost:5000/api/auth/login-doctor'
+                   :                             'http://localhost:5000/api/auth/login';
 
-    // ── DOCTOR ───────────────────────────────────────────────────
-    if (selectedRole === 'doctor') {
-      const stored  = localStorage.getItem('mc_doctors');
-      const doctors = stored ? JSON.parse(stored) : DEFAULT_DOCTORS;
-      const user    = doctors.find(d => d.email === email && d.password === password);
-      if (user) {
-        sessionStorage.setItem('mc_user', JSON.stringify({ name: user.name, role: 'doctor', id: user.id }));
-        window.location.href = 'doctor-dashboard.html';
-      } else {
-        showError('Invalid doctor credentials. Register as doctor first or use demo: aisha@clinic.com / doc123');
-      }
-      return;
-    }
+    try {
+      const res  = await fetch(endpoint, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
 
-    // ── PATIENT ──────────────────────────────────────────────────
-    if (selectedRole === 'patient') {
-      const stored   = localStorage.getItem('mc_patients');
-      const patients = stored ? JSON.parse(stored) : DEFAULT_PATIENTS;
-      const user     = patients.find(p => p.email === email && p.password === password);
-      if (user) {
-        sessionStorage.setItem('mc_user', JSON.stringify({ name: user.name, role: 'patient', id: user.id }));
-        window.location.href = 'patient-dashboard.html';
-      } else {
-        showError('Invalid patient credentials. Register first or use demo: arjun@mail.com / pass123');
-      }
-      return;
+      if (!res.ok) return showError(data.message || 'Login failed');
+
+      sessionStorage.setItem('mc_token', data.token);
+      sessionStorage.setItem('mc_user', JSON.stringify({
+        name: data.name, role: data.role, id: data.id
+      }));
+
+      if (data.role === 'admin')       window.location.href = 'admin-dashboard';
+      else if (data.role === 'doctor') window.location.href = 'doctor-dashboard';
+      else                             window.location.href = 'patient-dashboard';
+
+    } catch (err) {
+      showError('Cannot reach server. Is the backend running? (npm run dev)');
     }
   }
 
-  // Allow Enter key to submit
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') handleLogin();
   });

@@ -5,54 +5,88 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
+
+// ───────── REGISTER ─────────
 router.post("/register", async (req, res) => {
 
   const { name, email, password } = req.body;
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
 
-  db.query(
-    "INSERT INTO patients (name,email,password) VALUES (?,?,?)",
-    [name,email,hashedPassword],
-    (err,result) => {
+  try {
 
-      if(err){
-        return res.status(500).send(err);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    db.query(
+      "INSERT INTO patients (name,email,password) VALUES (?,?,?)",
+      [name, email, hashedPassword],
+      (err, result) => {
+
+        if (err) {
+          console.log(err);
+          return res.status(500).json({ message: "Database error" });
+        }
+
+        res.json({
+          message: "User registered successfully"
+        });
+
       }
+    );
 
-      res.send("User registered");
-    }
-  );
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
 
 });
 
-router.post("/login", (req,res)=>{
+
+// ───────── LOGIN ─────────
+router.post("/login", (req, res) => {
 
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password required" });
+  }
+
   db.query(
-    "SELECT * FROM patients WHERE email=?",
+    "SELECT * FROM patients WHERE email = ?",
     [email],
-    async (err,result)=>{
+    async (err, result) => {
 
-      if(err) return res.status(500).send(err);
+      if (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Database error" });
+      }
 
-      if(result.length==0)
-        return res.status(404).send("User not found");
+      if (result.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
       const user = result[0];
 
-      const valid = await bcrypt.compare(password,user.password);
+      const valid = await bcrypt.compare(password, user.password);
 
-      if(!valid)
-        return res.status(401).send("Invalid password");
+      if (!valid) {
+        return res.status(401).json({ message: "Invalid password" });
+      }
 
       const token = jwt.sign(
-        {id:user.id},
-        process.env.JWT_SECRET
+        { id: user.id },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
       );
 
-      res.json({token});
+      res.json({
+        message: "Login successful",
+        token: token,
+        id: user.id,
+        name: user.name,
+        role: "patient"
+      });
 
     }
   );
