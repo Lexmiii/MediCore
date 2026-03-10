@@ -132,7 +132,7 @@ function selectSlot(btn, time) {
 // ── Backend API Example ───────────────────────────────────────────
 async function loadPatients() {
   try {
-    const res = await fetch("http://localhost:5000/patients");
+    const res = await fetch("http://localhost:5000/api/patients");
 
     const data = await res.json();
 

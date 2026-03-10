@@ -31,11 +31,11 @@ app.use("/api/appointments", appointmentRoutes);
 const T = path.join(__dirname, "../templates");
 
 app.get("/",         (req, res) => res.redirect("/login"));
-app.get("/login",    (req, res) => res.sendFile(path.join(T, "login.html")));
-app.get("/register", (req, res) => res.sendFile(path.join(T, "register.html")));
-app.get("/admin",    (req, res) => res.sendFile(path.join(T, "admin-dashboard.html")));
-app.get("/doctor",   (req, res) => res.sendFile(path.join(T, "doctor-dashboard.html")));
-app.get("/patient",  (req, res) => res.sendFile(path.join(T, "patient-dashboard.html")));
+app.get("/login",    (req, res) => res.sendFile(path.join(T, "login")));
+app.get("/register", (req, res) => res.sendFile(path.join(T, "register")));
+app.get("/admin",    (req, res) => res.sendFile(path.join(T, "admin-dashboard")));
+app.get("/doctor",   (req, res) => res.sendFile(path.join(T, "doctor-dashboard")));
+app.get("/patient",  (req, res) => res.sendFile(path.join(T, "patient-dashboard")));
 
 // ─── TEST ROUTE ───────────────────────────────────
 app.get("/test", (req, res) => res.send("Medicore Backend Running 🚀"));
